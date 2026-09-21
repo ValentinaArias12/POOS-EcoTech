@@ -5,25 +5,40 @@ def crear_tablas():
     cursor = conexion.cursor()
     
     if obtener_motor() == "sqlite":
-        sql = """
+        sql_empleado = """
         CREATE TABLE IF NOT EXISTS empleado (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
             correo TEXT NOT NULL
         )
         """
+        sql_departamento = """
+        CREATE TABLE IF NOT EXISTS departamento (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL
+        )
+        """
     else:
-        sql = """
+        sql_empleado = """
         CREATE TABLE IF NOT EXISTS empleado (
             id INT PRIMARY KEY AUTO_INCREMENT,
             nombre VARCHAR(100) NOT NULL,
             correo VARCHAR(150) NOT NULL
         )
         """
-    cursor.execute(sql)
+        sql_departamento = """
+        CREATE TABLE IF NOT EXISTS departamento (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            nombre VARCHAR(100) NOT NULL
+        )
+        """
+
+    cursor.execute(sql_empleado)
+    cursor.execute(sql_departamento)
+    
     conexion.commit()
     conexion.close()
 
 if __name__ == "__main__":
     crear_tablas()
-    print("Base de datos preparada correctamente.")
+    print("Base de datos y tablas preparadas correctamente.")
