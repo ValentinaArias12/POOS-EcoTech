@@ -5,7 +5,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from dominio.empleado import Empleado
+from src.dominio.empleado import Empleado
 
 
 load_dotenv()
