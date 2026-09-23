@@ -14,8 +14,19 @@ if __name__ == "__main__":
     print(f"Empleado -> ID: {empleado.id} | Nombre: {empleado.nombre}")
     print(f"Departamento -> ID: {departamento.id} | Nombre: {departamento.nombre}")
 
-    # Solicitar la persistencia a través de sus respectivos DAO
+#-------------------------------------------------------------------------------------------|
     EmpleadoDAO.insertar(empleado)
+#---------------------------------------------------------------------------------------
+    encontrado = EmpleadoDAO.buscar_por_id(empleado.id)
+    print("Encontrado por ID:", encontrado)
+#--------------------------------------------------------------------------------------
+    por_correo = EmpleadoDAO.buscar_por_correo(empleado.correo)
+    print("Encontrado por Correo:", por_correo)
+#-------------------------------------------------------------
+    print("\nListado completo de empleados:")
+    for item in EmpleadoDAO.listar():
+        print(item) 
+#--------------------------------------------------------------------------------------------
     DepartamentoDAO.insertar(departamento)
 
     print("\n--- Estado DESPUÉS de persistir ---")
