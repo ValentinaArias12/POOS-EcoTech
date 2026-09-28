@@ -1,8 +1,8 @@
 class Empleado:
-    def __init__(self, nombre: str, correo: str, id: int = None):
+    def __init__(self, nombre, correo, id=None):
         self.id = id
         self.nombre = nombre
         self.correo = correo
 
-    def mostrar_datos(self) -> str:
-        return f"[{self.id}] {self.nombre} - {self.correo}"
+    def __str__(self):
+        return f"Empleado(id={self.id}, nombre='{self.nombre}', correo='{self.correo}')"
