@@ -47,8 +47,3 @@ def menu_empleado():
             print("Saliendo del programa.")
             break
 
-if __name__ == "__main__":
-    crear_tablas()
-    menu_empleado()
-
-

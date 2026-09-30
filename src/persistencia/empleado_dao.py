@@ -2,19 +2,17 @@ from dominio.empleado import Empleado
 from persistencia.conexion import abrir_conexion, marcador_sql, obtener_motor
 
 class EmpleadoDAO:
+    
     @staticmethod
     def insertar(empleado):
         conexion = abrir_conexion()
         cursor = conexion.cursor()
-        marcador = "?" if obtener_motor() == "sqlite" else "%s"
-        
+        marca = marcador_sql()
         sql = f"""
         INSERT INTO empleado (nombre, correo)
-        VALUES ({marcador}, {marcador})
+        VALUES ({marca}, {marca})
         """
-        
         cursor.execute(sql, (empleado.nombre, empleado.correo))
-        
         empleado.id = cursor.lastrowid
         conexion.commit()
         conexion.close()

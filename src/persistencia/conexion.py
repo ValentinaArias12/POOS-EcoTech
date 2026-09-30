@@ -26,5 +26,9 @@ def abrir_conexion():
 def marcador_sql():
     if obtener_motor() == "sqlite":
         return "?"
+<<<<<<< HEAD
     return "%s"
     
+=======
+    return "%s"
+>>>>>>> 7f9494a9836c597f7b1abb44348cf2df6a7a8b28
