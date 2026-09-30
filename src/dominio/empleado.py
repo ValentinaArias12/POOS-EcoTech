@@ -6,3 +6,6 @@ class Empleado:
 
     def mostrar_datos(self) -> str:
         return f"[{self.id}] {self.nombre} - {self.correo}"
+
+    def __str__(self) -> str:
+        return self.mostrar_datos()

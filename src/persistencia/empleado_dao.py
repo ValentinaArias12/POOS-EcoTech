@@ -1,4 +1,5 @@
-from persistencia.conexion import abrir_conexion, obtener_motor
+from dominio.empleado import Empleado
+from persistencia.conexion import abrir_conexion, marcador_sql, obtener_motor
 
 class EmpleadoDAO:
     @staticmethod
@@ -20,3 +21,90 @@ class EmpleadoDAO:
         return empleado
     
     #sirve para obtener todos los empleados de la base de datos
+
+    @staticmethod
+    def buscar_por_id(id_empleado):
+        conexion = abrir_conexion()
+        cursor = conexion.cursor()
+        marcador = marcador_sql()
+        
+        sql = f"""
+        SELECT id, nombre, correo FROM empleado WHERE id = {marcador}
+        """
+        
+        cursor.execute(sql, (id_empleado,))
+        fila = cursor.fetchone()
+        conexion.close()
+
+        if fila is None:
+                return None
+        
+        return Empleado(id=fila[0], nombre=fila[1], correo=fila[2])
+
+    @staticmethod
+    def listar():
+        conexion = abrir_conexion()
+        cursor = conexion.cursor()
+        cursor.execute(
+            "SELECT id, nombre, correo FROM empleado"
+        )
+        filas = cursor.fetchall()
+        conexion.close()
+        empleados = []
+        for fila in filas:
+            empleados.append(
+                Empleado(
+                    id=fila[0],
+                    nombre=fila[1],
+                    correo=fila[2]
+                )
+            )
+        return empleados
+
+    @staticmethod
+    def actualizar(empleado):
+        conexion = None
+        try:
+            conexion = abrir_conexion()
+            cursor = conexion.cursor()
+            marca = marcador_sql()
+            sql = (
+                "UPDATE empleado "
+                f"SET nombre = {marca}, correo = {marca} "
+                f"WHERE id = {marca}"
+            )
+            cursor.execute(
+            sql,
+                (
+                empleado.nombre,
+                empleado.correo,
+                empleado.id
+                )
+            )
+            conexion.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            
+            if conexion:
+                conexion.rollback()
+            raise
+        finally:
+            if conexion:
+                conexion.close()
+
+
+    @staticmethod
+    def eliminar(id_empleado):
+        conexion = abrir_conexion()
+        cursor = conexion.cursor()
+        marca = marcador_sql()
+        sql = (
+            "DELETE FROM empleado "
+            f"WHERE id = {marca}"
+        )
+        cursor.execute(sql, (id_empleado,))
+        conexion.commit()
+        eliminado = cursor.rowcount > 0
+        conexion.close()
+        return eliminado
+
