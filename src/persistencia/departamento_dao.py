@@ -1,20 +1,85 @@
-from persistencia.conexion import abrir_conexion, obtener_motor
+from dominio.departamento import Departamento
+from persistencia.conexion import abrir_conexion, marcador_sql
+
 
 class DepartamentoDAO:
-    @staticmethod  
+    @staticmethod
+    def _fila_a_departamento(fila):
+        return Departamento(id=fila[0], nombre=fila[1])
+
+    @staticmethod
     def insertar(departamento):
+        conexion = None
+        try:
+            conexion = abrir_conexion()
+            cursor = conexion.cursor()
+            m = marcador_sql()
+            cursor.execute(f"INSERT INTO departamento (nombre) VALUES ({m})", (departamento.nombre,))
+            departamento.id = cursor.lastrowid
+            conexion.commit()
+            return departamento
+        except Exception:
+            if conexion:
+                conexion.rollback()
+            raise
+        finally:
+            if conexion:
+                conexion.close()
+
+    @staticmethod
+    def buscar_por_id(id_departamento):
         conexion = abrir_conexion()
-        cursor = conexion.cursor()
-        marcador = "?" if obtener_motor() == "sqlite" else "%s"
-        
-        sql = f"""
-        INSERT INTO departamento (nombre)
-        VALUES ({marcador})
-        """
-        
-        cursor.execute(sql, (departamento.nombre,))
-        
-        departamento.id = cursor.lastrowid
-        conexion.commit()
-        conexion.close() 
-        return departamento
+        try:
+            cursor = conexion.cursor()
+            m = marcador_sql()
+            cursor.execute(f"SELECT id,nombre FROM departamento WHERE id={m}", (id_departamento,))
+            fila = cursor.fetchone()
+            return None if fila is None else DepartamentoDAO._fila_a_departamento(fila)
+        finally:
+            conexion.close()
+
+    @staticmethod
+    def listar():
+        conexion = abrir_conexion()
+        try:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT id,nombre FROM departamento ORDER BY id")
+            return [DepartamentoDAO._fila_a_departamento(f) for f in cursor.fetchall()]
+        finally:
+            conexion.close()
+
+    @staticmethod
+    def actualizar(departamento):
+        conexion = None
+        try:
+            conexion = abrir_conexion()
+            cursor = conexion.cursor()
+            m = marcador_sql()
+            cursor.execute(f"UPDATE departamento SET nombre={m} WHERE id={m}", (departamento.nombre, departamento.id))
+            conexion.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            if conexion:
+                conexion.rollback()
+            raise
+        finally:
+            if conexion:
+                conexion.close()
+
+    @staticmethod
+    def eliminar(id_departamento):
+        conexion = None
+        try:
+            conexion = abrir_conexion()
+            cursor = conexion.cursor()
+            m = marcador_sql()
+            cursor.execute(f"DELETE FROM departamento WHERE id={m}", (id_departamento,))
+            conexion.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            if conexion:
+                conexion.rollback()
+            raise
+        finally:
+            if conexion:
+                conexion.close()
