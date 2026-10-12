@@ -34,18 +34,6 @@ def abrir_conexion():
 
     raise ValueError(f"Motor no soportado: {motor}")
 
-<<<<<<< HEAD
-def marcador_sql():
-    if obtener_motor() == "sqlite":
-        return "?"
-<<<<<<< HEAD
-    return "%s"
-    
-=======
-    return "%s"
->>>>>>> 7f9494a9836c597f7b1abb44348cf2df6a7a8b28
-=======
 
 def marcador_sql() -> str:
     return "?" if obtener_motor() == "sqlite" else "%s"
->>>>>>> ac8be7d (Implementa avances Ev2: nuevas entidades, DAO, CRUD y documentacion)

@@ -121,7 +121,7 @@ class ProyectoDAO:
             cursor.execute(
                 f"""
                 SELECT e.id,e.nombre,e.correo,e.telefono,e.fecha_inicio,e.salario_base,
-                       e.tipo,e.bono_anual,e.tarifa_hora,e.departamento_id
+                    e.tipo,e.bono_anual,e.tarifa_hora,e.departamento_id
                 FROM empleado e
                 INNER JOIN proyecto_empleado pe ON pe.empleado_id=e.id
                 WHERE pe.proyecto_id={m}

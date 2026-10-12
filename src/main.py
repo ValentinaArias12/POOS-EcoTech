@@ -1,4 +1,3 @@
-
 from persistencia.crear_bd import crear_tablas
 from persistencia.departamento_dao import DepartamentoDAO
 from persistencia.empleado_dao import EmpleadoDAO
@@ -77,15 +76,15 @@ def menu_departamentos():
             else:
                 print("Opción no válida.")
         except ValueError as exc:
-            print(f"Validación: {exc}")
-        except Exception:
-            print("No fue posible completar la operación de departamento.")
+            print(f"Error de validación: {exc}")
+        except Exception as exc:
+            print(f"Error de base de datos / sistema: {exc}")
 
 
 def crear_empleado_desde_entrada():
-    nombre = input("Nombre: ")
-    correo = input("Correo: ")
-    telefono = input("Teléfono (opcional): ")
+    nombre = input("Nombre: ").strip()
+    correo = input("Correo: ").strip().lower()
+    telefono = input("Teléfono (opcional): ").strip()
     salario = pedir_float("Salario base: ", minimo=0)
     dep_id = pedir_entero("ID departamento (Enter = sin departamento): ", permitir_vacio=True)
     tipo = input("Tipo [1=Base, 2=Planta, 3=Contrata]: ").strip()
@@ -100,8 +99,8 @@ def crear_empleado_desde_entrada():
 def menu_empleados():
     while True:
         print("\n--- EMPLEADOS ---")
-        print("1. Registrar")
-        print("2. Listar")
+        print("1. Registrar empleado")
+        print("2. Listar empleados")
         print("3. Buscar por ID")
         print("4. Buscar por correo")
         print("5. Actualizar correo/departamento")
@@ -112,7 +111,7 @@ def menu_empleados():
             if op == "1":
                 emp = crear_empleado_desde_entrada()
                 EmpleadoDAO.insertar(emp)
-                print(f"Empleado registrado con ID {emp.id}.")
+                print(f"Empleado registrado con éxito con ID {emp.id}.")
             elif op == "2":
                 empleados = EmpleadoDAO.listar()
                 if not empleados:
@@ -123,7 +122,7 @@ def menu_empleados():
                 emp = EmpleadoDAO.buscar_por_id(pedir_entero("ID: "))
                 print(emp if emp else "Empleado no encontrado.")
             elif op == "4":
-                emp = EmpleadoDAO.buscar_por_correo(input("Correo: "))
+                emp = EmpleadoDAO.buscar_por_correo(input("Correo: ").strip())
                 print(emp if emp else "Empleado no encontrado.")
             elif op == "5":
                 emp = EmpleadoDAO.buscar_por_id(pedir_entero("ID: "))
@@ -136,24 +135,24 @@ def menu_empleados():
                 dep = pedir_entero("Nuevo ID departamento (Enter = mantener): ", permitir_vacio=True)
                 if dep is not None:
                     emp.departamento_id = dep
-                print("Actualizado." if EmpleadoDAO.actualizar(emp) else "Sin cambios.")
+                print("Actualizado correctamente." if EmpleadoDAO.actualizar(emp) else "Sin cambios.")
             elif op == "6":
-                print("Eliminado." if EmpleadoDAO.eliminar(pedir_entero("ID: ")) else "Empleado no encontrado.")
+                print("Eliminado correctamente." if EmpleadoDAO.eliminar(pedir_entero("ID: ")) else "Empleado no encontrado.")
             elif op == "0":
                 return
             else:
                 print("Opción no válida.")
         except ValueError as exc:
-            print(f"Validación: {exc}")
-        except Exception:
-            print("No fue posible completar la operación de empleado.")
+            print(f"Error de validación: {exc}")
+        except Exception as exc:
+            print(f"Error de base de datos / sistema: {exc}")
 
 
 def menu_proyectos():
     while True:
         print("\n--- PROYECTOS ---")
-        print("1. Crear")
-        print("2. Listar")
+        print("1. Crear proyecto")
+        print("2. Listar proyectos")
         print("3. Actualizar")
         print("4. Eliminar")
         print("5. Asignar empleado")
@@ -162,7 +161,7 @@ def menu_proyectos():
         op = input("Opción: ").strip()
         try:
             if op == "1":
-                p = Proyecto(nombre=input("Nombre: "), descripcion=input("Descripción: "))
+                p = Proyecto(nombre=input("Nombre: ").strip(), descripcion=input("Descripción: ").strip())
                 ProyectoDAO.insertar(p)
                 print(f"Proyecto creado con ID {p.id}.")
             elif op == "2":
@@ -195,9 +194,9 @@ def menu_proyectos():
             else:
                 print("Opción no válida.")
         except ValueError as exc:
-            print(f"Validación: {exc}")
-        except Exception:
-            print("No fue posible completar la operación de proyecto. Verifica IDs duplicados o inexistentes.")
+            print(f"Error de validación: {exc}")
+        except Exception as exc:
+            print(f"Error de base de datos / sistema: {exc}")
 
 
 def menu_registros():
@@ -216,7 +215,7 @@ def menu_registros():
                     empleado_id=pedir_entero("ID empleado: "),
                     proyecto_id=pedir_entero("ID proyecto: "),
                     horas=pedir_float("Horas: ", minimo=0.01),
-                    descripcion=input("Descripción tarea: "),
+                    descripcion=input("Descripción tarea: ").strip(),
                 )
                 RegistroTiempoDAO.insertar(r)
                 print(f"Registro creado con ID {r.id}.")
@@ -248,16 +247,18 @@ def menu_registros():
             else:
                 print("Opción no válida.")
         except ValueError as exc:
-            print(f"Validación: {exc}")
-        except Exception:
-            print("No fue posible completar la operación de registro. Verifica que empleado y proyecto existan.")
+            print(f"Error de validación: {exc}")
+        except Exception as exc:
+            print(f"Error de base de datos / sistema: {exc}")
 
 
 def main():
     try:
         crear_tablas()
-    except Exception:
-        print("No fue posible preparar la base de datos. Revisa la configuración de .env.")
+        print("✓ Base de datos conectada e inicializada correctamente.")
+    except Exception as exc:
+        print(f"✘ ERROR AL CONECTAR/CREAR BASE DE DATOS: {exc}")
+        print("Verifica tu archivo .env o que el servidor MySQL / SQLite esté activo.")
         return
 
     while True:
@@ -283,50 +284,5 @@ def main():
             print("Opción no válida.")
 
 
-<<<<<<< HEAD
-
-def solicitar_opcion():
-    while True:
-        try:
-            opcion = int(input("Seleccione una opción: "))
-            if opcion < 0 or opcion > 5:
-                print("Opción fuera de rango.")
-                continue
-            return opcion
-        except ValueError:
-            print("Debe ingresar un número.")
-def registrar_empleado():
-    nombre = input("Nombre: ").strip()
-    correo = input("Correo: ").strip()
-    empleado = Empleado(nombre, correo)
-    try:
-        EmpleadoDAO.insertar(empleado)
-        print("Empleado registrado correctamente.")
-    except Exception:
-        print("No fue posible registrar el empleado.")
-
-def listar_empleados():
-    # Lógica para listar consumiendo EmpleadoDAO.listar()
-    pass
-
-def menu_empleado():
-    while True:
-        print("\n--- Menú ---")
-        print("1. Registrar empleado")
-        print("2. Listar empleados")
-        print("0. Salir")
-        
-        opcion = solicitar_opcion()
-        
-        if opcion == 1:
-            registrar_empleado()
-        elif opcion == 2:
-            listar_empleados()
-        elif opcion == 0:
-            print("Saliendo del programa.")
-            break
-
-=======
 if __name__ == "__main__":
     main()
->>>>>>> ac8be7d (Implementa avances Ev2: nuevas entidades, DAO, CRUD y documentacion)

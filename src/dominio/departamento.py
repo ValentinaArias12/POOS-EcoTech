@@ -9,7 +9,6 @@ class Departamento:
             raise ValueError("El nombre del departamento es obligatorio.")
         self.id = id
         self.nombre = nombre
-<<<<<<< HEAD
         self._empleados: list[Empleado] = []
 
     def agregar_empleado(self, empleado: Empleado):
@@ -17,9 +16,6 @@ class Departamento:
             return False
         self._empleados.append(empleado)
         return True
-=======
-        self._empleados = []
->>>>>>> ac8be7d (Implementa avances Ev2: nuevas entidades, DAO, CRUD y documentacion)
 
     def agregar_empleado(self, empleado) -> bool:
         if empleado in self._empleados:
