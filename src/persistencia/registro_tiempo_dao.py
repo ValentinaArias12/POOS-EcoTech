@@ -1,5 +1,5 @@
 from dominio.registro_tiempo import RegistroTiempo
-from persistencia.conexion import abrir_conexion, marcador_sql
+from persistencia.conexion import abrir_conexion
 
 
 class RegistroTiempoDAO:
@@ -16,9 +16,8 @@ class RegistroTiempoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
             cursor.execute(
-                f"INSERT INTO registro_tiempo (fecha,horas,descripcion,empleado_id,proyecto_id) VALUES ({m},{m},{m},{m},{m})",
+                "INSERT INTO registro_tiempo (fecha,horas,descripcion,empleado_id,proyecto_id) VALUES (%s,%s,%s,%s,%s)",
                 (registro.fecha, registro.horas, registro.descripcion, registro.empleado_id, registro.proyecto_id),
             )
             registro.id = cursor.lastrowid
@@ -37,8 +36,7 @@ class RegistroTiempoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"SELECT id,fecha,horas,descripcion,empleado_id,proyecto_id FROM registro_tiempo WHERE id={m}", (id_registro,))
+            cursor.execute("SELECT id,fecha,horas,descripcion,empleado_id,proyecto_id FROM registro_tiempo WHERE id=%s", (id_registro,))
             fila = cursor.fetchone()
             return None if fila is None else RegistroTiempoDAO._fila_a_registro(fila)
         finally:
@@ -60,9 +58,8 @@ class RegistroTiempoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
             cursor.execute(
-                f"UPDATE registro_tiempo SET fecha={m},horas={m},descripcion={m},empleado_id={m},proyecto_id={m} WHERE id={m}",
+                "UPDATE registro_tiempo SET fecha=%s,horas=%s,descripcion=%s,empleado_id=%s,proyecto_id=%s WHERE id=%s",
                 (registro.fecha, registro.horas, registro.descripcion, registro.empleado_id, registro.proyecto_id, registro.id),
             )
             conexion.commit()
@@ -81,8 +78,7 @@ class RegistroTiempoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"DELETE FROM registro_tiempo WHERE id={m}", (id_registro,))
+            cursor.execute("DELETE FROM registro_tiempo WHERE id=%s", (id_registro,))
             conexion.commit()
             return cursor.rowcount > 0
         except Exception:
@@ -98,8 +94,7 @@ class RegistroTiempoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"SELECT COALESCE(SUM(horas),0) FROM registro_tiempo WHERE proyecto_id={m}", (id_proyecto,))
+            cursor.execute("SELECT COALESCE(SUM(horas),0) FROM registro_tiempo WHERE proyecto_id=%s", (id_proyecto,))
             return float(cursor.fetchone()[0] or 0)
         finally:
             conexion.close()

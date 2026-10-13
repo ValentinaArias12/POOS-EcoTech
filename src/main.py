@@ -255,10 +255,10 @@ def menu_registros():
 def main():
     try:
         crear_tablas()
-        print("✓ Base de datos conectada e inicializada correctamente.")
+        print("OK: Base de datos conectada e inicializada correctamente.")
     except Exception as exc:
-        print(f"✘ ERROR AL CONECTAR/CREAR BASE DE DATOS: {exc}")
-        print("Verifica tu archivo .env o que el servidor MySQL / SQLite esté activo.")
+        print(f"ERROR AL CONECTAR/CREAR BASE DE DATOS: {exc}")
+        print("Verifica tu archivo .env o que el servidor MariaDB/MySQL esté activo.")
         return
 
     while True:

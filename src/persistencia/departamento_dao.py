@@ -1,5 +1,5 @@
 from dominio.departamento import Departamento
-from persistencia.conexion import abrir_conexion, marcador_sql
+from persistencia.conexion import abrir_conexion
 
 
 class DepartamentoDAO:
@@ -13,8 +13,7 @@ class DepartamentoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"INSERT INTO departamento (nombre) VALUES ({m})", (departamento.nombre,))
+            cursor.execute("INSERT INTO departamento (nombre) VALUES (%s)", (departamento.nombre,))
             departamento.id = cursor.lastrowid
             conexion.commit()
             return departamento
@@ -31,8 +30,7 @@ class DepartamentoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"SELECT id,nombre FROM departamento WHERE id={m}", (id_departamento,))
+            cursor.execute("SELECT id,nombre FROM departamento WHERE id=%s", (id_departamento,))
             fila = cursor.fetchone()
             return None if fila is None else DepartamentoDAO._fila_a_departamento(fila)
         finally:
@@ -54,8 +52,7 @@ class DepartamentoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"UPDATE departamento SET nombre={m} WHERE id={m}", (departamento.nombre, departamento.id))
+            cursor.execute("UPDATE departamento SET nombre=%s WHERE id=%s", (departamento.nombre, departamento.id))
             conexion.commit()
             return cursor.rowcount > 0
         except Exception:
@@ -72,8 +69,7 @@ class DepartamentoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"DELETE FROM departamento WHERE id={m}", (id_departamento,))
+            cursor.execute("DELETE FROM departamento WHERE id=%s", (id_departamento,))
             conexion.commit()
             return cursor.rowcount > 0
         except Exception:

@@ -8,9 +8,6 @@ __pycache__/
 # Variables sensibles
 .env
 
-# Base de datos local
-*.db
-
 # Configuración local del editor
 .vscode/
 

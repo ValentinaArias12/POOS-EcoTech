@@ -1,5 +1,5 @@
 from dominio.proyecto import Proyecto
-from persistencia.conexion import abrir_conexion, marcador_sql
+from persistencia.conexion import abrir_conexion
 
 
 class ProyectoDAO:
@@ -13,9 +13,8 @@ class ProyectoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
             cursor.execute(
-                f"INSERT INTO proyecto (nombre,descripcion,fecha_inicio,activo) VALUES ({m},{m},{m},{m})",
+                "INSERT INTO proyecto (nombre,descripcion,fecha_inicio,activo) VALUES (%s,%s,%s,%s)",
                 (proyecto.nombre, proyecto.descripcion, proyecto.fecha_inicio, int(proyecto.activo)),
             )
             proyecto.id = cursor.lastrowid
@@ -34,8 +33,7 @@ class ProyectoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"SELECT id,nombre,descripcion,fecha_inicio,activo FROM proyecto WHERE id={m}", (id_proyecto,))
+            cursor.execute("SELECT id,nombre,descripcion,fecha_inicio,activo FROM proyecto WHERE id=%s", (id_proyecto,))
             fila = cursor.fetchone()
             return None if fila is None else ProyectoDAO._fila_a_proyecto(fila)
         finally:
@@ -57,9 +55,8 @@ class ProyectoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
             cursor.execute(
-                f"UPDATE proyecto SET nombre={m},descripcion={m},fecha_inicio={m},activo={m} WHERE id={m}",
+                "UPDATE proyecto SET nombre=%s,descripcion=%s,fecha_inicio=%s,activo=%s WHERE id=%s",
                 (proyecto.nombre, proyecto.descripcion, proyecto.fecha_inicio, int(proyecto.activo), proyecto.id),
             )
             conexion.commit()
@@ -78,8 +75,7 @@ class ProyectoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
-            cursor.execute(f"DELETE FROM proyecto WHERE id={m}", (id_proyecto,))
+            cursor.execute("DELETE FROM proyecto WHERE id=%s", (id_proyecto,))
             conexion.commit()
             return cursor.rowcount > 0
         except Exception:
@@ -96,9 +92,8 @@ class ProyectoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
             cursor.execute(
-                f"INSERT INTO proyecto_empleado (proyecto_id,empleado_id) VALUES ({m},{m})",
+                "INSERT INTO proyecto_empleado (proyecto_id,empleado_id) VALUES (%s,%s)",
                 (id_proyecto, id_empleado),
             )
             conexion.commit()
@@ -117,14 +112,13 @@ class ProyectoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            m = marcador_sql()
             cursor.execute(
                 f"""
                 SELECT e.id,e.nombre,e.correo,e.telefono,e.fecha_inicio,e.salario_base,
                     e.tipo,e.bono_anual,e.tarifa_hora,e.departamento_id
                 FROM empleado e
                 INNER JOIN proyecto_empleado pe ON pe.empleado_id=e.id
-                WHERE pe.proyecto_id={m}
+                WHERE pe.proyecto_id=%s
                 ORDER BY e.id
                 """,
                 (id_proyecto,),

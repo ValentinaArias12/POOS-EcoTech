@@ -1,5 +1,5 @@
 from dominio.empleado import Empleado
-from persistencia.conexion import abrir_conexion, marcador_sql
+from persistencia.conexion import abrir_conexion
 
 
 class EmpleadoDAO:
@@ -33,7 +33,6 @@ class EmpleadoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
             bono, tarifa = EmpleadoDAO._valores_subtipo(empleado)
 
             tipo = getattr(empleado, "TIPO", getattr(empleado, "tipo", "GENERAL"))
@@ -46,7 +45,7 @@ class EmpleadoDAO:
                 INSERT INTO empleado
                 (nombre, correo, telefono, fecha_inicio, salario_base, tipo,
                 bono_anual, tarifa_hora, departamento_id)
-                VALUES ({m}, {m}, {m}, {m}, {m}, {m}, {m}, {m}, {m})
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(
                 sql,
@@ -78,12 +77,11 @@ class EmpleadoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            m = marcador_sql()
             sql = f"""
                 SELECT id, nombre, correo, telefono, fecha_inicio, salario_base,
                     tipo, bono_anual, tarifa_hora, departamento_id
                 FROM empleado
-                WHERE id = {m}
+                WHERE id = %s
             """
             cursor.execute(sql, (id_empleado,))
             fila = cursor.fetchone()
@@ -96,12 +94,11 @@ class EmpleadoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            m = marcador_sql()
             sql = f"""
                 SELECT id, nombre, correo, telefono, fecha_inicio, salario_base,
                 tipo, bono_anual, tarifa_hora, departamento_id
                 FROM empleado
-                WHERE correo = {m}
+                WHERE correo = %s
             """
             cursor.execute(sql, (correo.strip().lower(),))
             fila = cursor.fetchone()
@@ -132,7 +129,6 @@ class EmpleadoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
             bono, tarifa = EmpleadoDAO._valores_subtipo(empleado)
 
             tipo = getattr(empleado, "TIPO", getattr(empleado, "tipo", "GENERAL"))
@@ -141,12 +137,12 @@ class EmpleadoDAO:
             salario_base = getattr(empleado, "salario_base", 0.0)
             departamento_id = getattr(empleado, "departamento_id", None)
 
-            sql = f"""
+            sql = """
                 UPDATE empleado
-                SET nombre = {m}, correo = {m}, telefono = {m}, fecha_inicio = {m},
-                    salario_base = {m}, tipo = {m}, bono_anual = {m},
-                    tarifa_hora = {m}, departamento_id = {m}
-                WHERE id = {m}
+                SET nombre = %s, correo = %s, telefono = %s, fecha_inicio = %s,
+                    salario_base = %s, tipo = %s, bono_anual = %s,
+                    tarifa_hora = %s, departamento_id = %s
+                WHERE id = %s
             """
             cursor.execute(
                 sql,
@@ -179,8 +175,7 @@ class EmpleadoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            m = marcador_sql()
-            sql = f"DELETE FROM empleado WHERE id = {m}"
+            sql = "DELETE FROM empleado WHERE id = %s"
             cursor.execute(sql, (id_empleado,))
             conexion.commit()
             return cursor.rowcount > 0

@@ -7,7 +7,7 @@ trabajadas, organizada en capas de dominio y persistencia.
 
 - Python 3.10 o superior.
 - Dependencias de `requirements.txt`.
-- SQLite por defecto o una instancia MySQL configurada mediante `.env`.
+- Una instancia MariaDB/MySQL configurada mediante `.env`.
 
 Instalación:
 
@@ -20,11 +20,14 @@ python -m pip install -r requirements.txt
 Copia `.env.example` como `.env` y ajusta la configuración de la base de
 datos. `.env` es local y no debe versionarse.
 
-SQLite es la opción predeterminada:
+MariaDB/MySQL es el único motor utilizado:
 
 ```dotenv
-DB_ENGINE=sqlite
-DB_NAME=ecotech.db
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_NAME=ecotech
+DB_USER=root
+DB_PASSWORD=
 ```
 
 ## Ejecución
