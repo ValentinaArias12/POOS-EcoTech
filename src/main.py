@@ -7,6 +7,7 @@ from dominio.departamento import Departamento
 from dominio.empleado import Empleado, EmpleadoPlanta, EmpleadoContrata
 from dominio.proyecto import Proyecto
 from dominio.registro_tiempo import RegistroTiempo
+from persistencia.semilla_bd import cargar_semillas
 
 
 def pedir_entero(mensaje, permitir_vacio=False):
@@ -82,18 +83,47 @@ def menu_departamentos():
 
 
 def crear_empleado_desde_entrada():
-    nombre = input("Nombre: ").strip()
-    correo = input("Correo: ").strip().lower()
+    while True:
+        nombre = input("Nombre: ").strip()
+        try:
+            Empleado._validar_nombre(nombre)
+            break
+        except ValueError as e:
+            print(e)
+
+    while True:
+        correo = input("Correo: ").strip().lower()
+        try:
+            Empleado._validar_correo(correo)
+            break
+        except ValueError as e:
+            print(e)
+
     telefono = input("Teléfono (opcional): ").strip()
-    salario = pedir_float("Salario base: ", minimo=0)
+
+
+    while True:
+        try:
+            salario = pedir_float("Salario base: ", minimo=0)
+            Empleado._validar_salario(salario)
+            break
+        except ValueError as e:
+            print(e)
+
     dep_id = pedir_entero("ID departamento (Enter = sin departamento): ", permitir_vacio=True)
+
     tipo = input("Tipo [1=Base, 2=Planta, 3=Contrata]: ").strip()
-    comunes = dict(nombre=nombre, correo=correo, telefono=telefono, salario_base=salario, departamento_id=dep_id)
+    comunes = dict(nombre=nombre, correo=correo, telefono=telefono,
+                salario_base=salario, departamento_id=dep_id)
+
     if tipo == "2":
-        return EmpleadoPlanta(**comunes, bono_anual=pedir_float("Bono anual: ", minimo=0))
+        bono = pedir_float("Bono anual: ", minimo=0)
+        return EmpleadoPlanta(**comunes, bono_anual=bono)
     if tipo == "3":
-        return EmpleadoContrata(**comunes, tarifa_hora=pedir_float("Tarifa hora: ", minimo=0))
+        tarifa = pedir_float("Tarifa hora: ", minimo=0)
+        return EmpleadoContrata(**comunes, tarifa_hora=tarifa)
     return Empleado(**comunes)
+
 
 
 def menu_empleados():
@@ -255,6 +285,7 @@ def menu_registros():
 def main():
     try:
         crear_tablas()
+        cargar_semillas()
         print("OK: Base de datos conectada e inicializada correctamente.")
     except Exception as exc:
         print(f"ERROR AL CONECTAR/CREAR BASE DE DATOS: {exc}")
