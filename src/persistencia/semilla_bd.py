@@ -42,7 +42,7 @@ def cargar_empleados(departamentos):
                 empleado_admin = existente
             continue
         
-        # Se asume que Empleado recibe (nombre, correo, departamento_id)
+
         depto_id = depto.id if hasattr(depto, "id") else depto
         empleado = Empleado(nombre=nombre, correo=correo, departamento_id=depto_id)
         EmpleadoDAO.insertar(empleado)

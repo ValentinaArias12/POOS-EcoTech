@@ -1,11 +1,27 @@
 from dominio.departamento import Departamento
 from persistencia.conexion import abrir_conexion
 
-
 class DepartamentoDAO:
     @staticmethod
     def _fila_a_departamento(fila):
         return Departamento(id=fila[0], nombre=fila[1])
+
+    @staticmethod
+    def buscar_por_nombre(nombre: str) -> Departamento | None:
+        """Busca un departamento por su nombre exacto para evitar duplicados en la BD."""
+        conexion = abrir_conexion()
+        try:
+            cursor = conexion.cursor()
+            cursor.execute(
+                "SELECT id, nombre FROM departamento WHERE nombre = %s",
+                (nombre,),
+            )
+            fila = cursor.fetchone()
+            return (
+                None if fila is None else DepartamentoDAO._fila_a_departamento(fila)
+            )
+        finally:
+            conexion.close()
 
     @staticmethod
     def insertar(departamento):
@@ -13,7 +29,10 @@ class DepartamentoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            cursor.execute("INSERT INTO departamento (nombre) VALUES (%s)", (departamento.nombre,))
+            cursor.execute(
+                "INSERT INTO departamento (nombre) VALUES (%s)",
+                (departamento.nombre,),
+            )
             departamento.id = cursor.lastrowid
             conexion.commit()
             return departamento
@@ -30,9 +49,14 @@ class DepartamentoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            cursor.execute("SELECT id,nombre FROM departamento WHERE id=%s", (id_departamento,))
+            cursor.execute(
+                "SELECT id, nombre FROM departamento WHERE id = %s",
+                (id_departamento,),
+            )
             fila = cursor.fetchone()
-            return None if fila is None else DepartamentoDAO._fila_a_departamento(fila)
+            return (
+                None if fila is None else DepartamentoDAO._fila_a_departamento(fila)
+            )
         finally:
             conexion.close()
 
@@ -41,8 +65,10 @@ class DepartamentoDAO:
         conexion = abrir_conexion()
         try:
             cursor = conexion.cursor()
-            cursor.execute("SELECT id,nombre FROM departamento ORDER BY id")
-            return [DepartamentoDAO._fila_a_departamento(f) for f in cursor.fetchall()]
+            cursor.execute("SELECT id, nombre FROM departamento ORDER BY id")
+            return [
+                DepartamentoDAO._fila_a_departamento(f) for f in cursor.fetchall()
+            ]
         finally:
             conexion.close()
 
@@ -52,7 +78,10 @@ class DepartamentoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            cursor.execute("UPDATE departamento SET nombre=%s WHERE id=%s", (departamento.nombre, departamento.id))
+            cursor.execute(
+                "UPDATE departamento SET nombre = %s WHERE id = %s",
+                (departamento.nombre, departamento.id),
+            )
             conexion.commit()
             return cursor.rowcount > 0
         except Exception:
@@ -69,7 +98,10 @@ class DepartamentoDAO:
         try:
             conexion = abrir_conexion()
             cursor = conexion.cursor()
-            cursor.execute("DELETE FROM departamento WHERE id=%s", (id_departamento,))
+            cursor.execute(
+                "DELETE FROM departamento WHERE id = %s",
+                (id_departamento,)
+            )
             conexion.commit()
             return cursor.rowcount > 0
         except Exception:
