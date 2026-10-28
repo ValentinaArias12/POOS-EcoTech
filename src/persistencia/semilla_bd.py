@@ -1,28 +1,25 @@
+
+from persistencia.crear_bd import crear_tablas
 from persistencia.departamento_dao import DepartamentoDAO
 from persistencia.empleado_dao import EmpleadoDAO
 from dominio.departamento import Departamento
 from dominio.empleado import Empleado
 
+
 def cargar_departamentos():
-    datos = [
-        ("Tecnología"),
-        ("Recursos Humanos"),
-        ("Finanzas"),
-        ("Marketing"),
-        ("Operaciones")
-    ]
-    departamentos = []
-    for nombre in datos:
-        existente = DepartamentoDAO.buscar_por_id(id)
+    nombres = ["Tecnología", "Administración", "Recursos Humanos"]
+    deptos_guardados = []
+    for nombre_dept in nombres:
+        existente = DepartamentoDAO.buscar_por_nombre(nombre_dept)
         if existente is not None:
-            print(f"Ya existe departamento: {id}")
-            departamentos.append(existente)
-            continue
-        depto = Departamento(nombre)
-        DepartamentoDAO.insertar(depto)
-        print(f"Creado departamento: {nombre}")
-        departamentos.append(depto)
-    return departamentos
+            print(f"ℹ El departamento '{nombre_dept}' ya existe. Omitiendo...")
+            deptos_guardados.append(existente)
+        else:
+            nuevo_depto = Departamento(nombre=nombre_dept)
+            DepartamentoDAO.insertar(nuevo_depto)
+            print(f"✔ Departamento '{nombre_dept}' creado exitosamente.")
+            deptos_guardados.append(nuevo_depto)
+    return deptos_guardados
 
 def cargar_empleados(departamentos):
     datos = [
@@ -32,32 +29,38 @@ def cargar_empleados(departamentos):
         ("Pedro Ramírez", "pedro@ecotech.example", departamentos[1]),
         ("Carolina Soto", "carolina@ecotech.example", departamentos[2]),
         ("Jorge Díaz", "jorge@ecotech.example", departamentos[2]),
-        ("Valeria Campos", "valeria@ecotech.example", departamentos[3]),
-        ("Andrés Herrera", "andres@ecotech.example", departamentos[3]),
-        ("Sofía Morales", "sofia@ecotech.example", departamentos[4]),
-        ("Ricardo Fuentes", "ricardo@ecotech.example", departamentos[4]),
         ("Claudia Vega", "claudia@ecotech.example", departamentos[0]),
         ("Felipe Navarro", "felipe@ecotech.example", departamentos[1]),
         ("Daniela Rojas", "daniela@ecotech.example", departamentos[2]),
-        ("Héctor Silva", "hector@ecotech.example", departamentos[3]),
-        ("Isabel Contreras", "isabel@ecotech.example", departamentos[4]),
-        ("Tomás Castillo", "tomas@ecotech.example", departamentos[0]),
-        ("Gabriela Flores", "gabriela@ecotech.example", departamentos[1]),
-        ("Rodrigo Pino", "rodrigo@ecotech.example", departamentos[2]),
-        ("Natalia Reyes", "natalia@ecotech.example", departamentos[3]),
-        ("Francisco Bravo", "francisco@ecotech.example", departamentos[4]),
     ]
+    empleado_admin = None
     for nombre, correo, depto in datos:
         existente = EmpleadoDAO.buscar_por_correo(correo)
         if existente is not None:
-            print(f"Ya existe empleado: {correo}")
+            print(f"ℹ Ya existe empleado: {correo}")
+            if correo == "ana@ecotech.example":
+                empleado_admin = existente
             continue
-        empleado = Empleado(nombre, correo, depto)
+        
+        # Se asume que Empleado recibe (nombre, correo, departamento_id)
+        depto_id = depto.id if hasattr(depto, "id") else depto
+        empleado = Empleado(nombre=nombre, correo=correo, departamento_id=depto_id)
         EmpleadoDAO.insertar(empleado)
-        print(f"Creado empleado: {correo}")
+        print(f"✔ Creado empleado: {correo}")
+        
+        if correo == "ana@ecotech.example":
+            empleado_admin = empleado
+            
+    return empleado_admin
+
+
 
 
 def cargar_semillas():
+    print(" Iniciando verificación e inserción de semillas...")
+    crear_tablas() 
     departamentos = cargar_departamentos()
-    cargar_empleados(departamentos)
+    print(" Carga de semillas completada.")
 
+if __name__ == "__main__":
+    cargar_semillas()
