@@ -1,10 +1,10 @@
-
+from dominio.departamento import Departamento
+from dominio.empleado import Empleado
 from persistencia.crear_bd import crear_tablas
 from persistencia.departamento_dao import DepartamentoDAO
 from persistencia.empleado_dao import EmpleadoDAO
-from dominio.departamento import Departamento
-from dominio.empleado import Empleado
-
+from persistencia.usuario_dao import UsuarioDAO
+from servicios.autenticacion import registrar_usuario
 
 def cargar_departamentos():
     nombres = ["Tecnología", "Administración", "Recursos Humanos"]
@@ -41,25 +41,55 @@ def cargar_empleados(departamentos):
             if correo == "ana@ecotech.example":
                 empleado_admin = existente
             continue
-        
-
         depto_id = depto.id if hasattr(depto, "id") else depto
         empleado = Empleado(nombre=nombre, correo=correo, departamento_id=depto_id)
         EmpleadoDAO.insertar(empleado)
         print(f"✔ Creado empleado: {correo}")
-        
         if correo == "ana@ecotech.example":
             empleado_admin = empleado
-            
     return empleado_admin
 
+def cargar_usuario_admin(empleado_admin):
+    """Crea la cuenta de usuario 'admin' vinculada a Ana Torres si no existe."""
+    if empleado_admin is None or not hasattr(empleado_admin, "id"):
+        return
+    usuario_existente = UsuarioDAO.buscar_por_nombre("admin")
+    if usuario_existente is None:
+        registrar_usuario(
+            empleado_id=empleado_admin.id,
+            nombre_usuario="admin",
+            clave="admin123",
+            rol="admin",
+        )
+        print("Cuenta de usuario 'admin' creada exitosamente (Clave: admin123).")
+    else:
+        print("ℹ El usuario 'admin' ya se encuentra registrado.")
 
-
+def cargar_usuario_empleado():
+    """Crea la cuenta con rol 'empleado' asociada a Luis Pérez si no existe."""
+    empleado_luis = EmpleadoDAO.buscar_por_correo("luis@ecotech.example")
+    if empleado_luis is None or not hasattr(empleado_luis, "id"):
+        return
+    usuario_existente = UsuarioDAO.buscar_por_nombre("luis")
+    if usuario_existente is None:
+        registrar_usuario(
+            empleado_id=empleado_luis.id,
+            nombre_usuario="luis",
+            clave="empleado123",
+            rol="empleado",
+        )
+        print(" Cuenta de usuario 'luis' creada exitosamente (Rol: empleado | Clave: empleado123).")
+    else:
+        print("ℹ El usuario 'luis' ya se encuentra registrado.")
 
 def cargar_semillas():
     print(" Iniciando verificación e inserción de semillas...")
-    crear_tablas() 
+    crear_tablas()
     departamentos = cargar_departamentos()
+    empleado_admin = cargar_empleados(departamentos)
+    # Crea la cuenta con rol 'admin' (Ana Torres) y la cuenta con rol 'empleado' (Luis Pérez)
+    cargar_usuario_admin(empleado_admin)
+    cargar_usuario_empleado()
     print(" Carga de semillas completada.")
 
 if __name__ == "__main__":

@@ -1,10 +1,13 @@
 from datetime import date
 
-
 class Empleado:
     """Clase base del dominio EcoTech. No conoce SQL ni detalles de persistencia."""
-
     TIPO = "BASE"
+    MIN_NOMBRE = 2
+    MAX_NOMBRE = 120
+    MIN_CORREO = 6
+    MAX_CORREO = 150
+    MAX_TELEFONO = 30
 
     def __init__(
         self,
@@ -22,7 +25,7 @@ class Empleado:
         self.id = id
         self.nombre = self._validar_nombre(nombre)
         self._correo = self._validar_correo(correo)
-        self.telefono = (telefono or "").strip()
+        self.telefono = self._validar_telefono(telefono)
         self.fecha_inicio = fecha_inicio or date.today().isoformat()
         self.salario_base = self._validar_salario(salario_base)
         self.tipo = tipo or self.TIPO
@@ -30,19 +33,39 @@ class Empleado:
         self.tarifa_hora = self._validar_salario(tarifa_hora)
         self.departamento_id = departamento_id
 
-    @staticmethod
-    def _validar_nombre(nombre: str) -> str:
-        nombre = (nombre or "").strip()
-        if len(nombre) < 2:
-            raise ValueError("El nombre debe tener al menos 2 caracteres.")
+    @classmethod
+    def _validar_nombre(cls, nombre: str) -> str:
+        """Valida que el nombre sea texto y cumpla los límites de longitud."""
+        if not isinstance(nombre, str):
+            raise TypeError("El nombre debe ser texto.")
+        nombre = nombre.strip()
+        if not cls.MIN_NOMBRE <= len(nombre) <= cls.MAX_NOMBRE:
+            raise ValueError(
+                f"El nombre debe tener entre {cls.MIN_NOMBRE} y {cls.MAX_NOMBRE} caracteres."
+            )
         return nombre
 
-    @staticmethod
-    def _validar_correo(correo: str) -> str:
-        correo = (correo or "").strip().lower()
+    @classmethod
+    def _validar_correo(cls, correo: str) -> str:
+        """Valida longitud y formato del correo electrónico."""
+        if not isinstance(correo, str):
+            raise TypeError("El correo debe ser texto.")
+        correo = correo.strip().lower()
+        if not cls.MIN_CORREO <= len(correo) <= cls.MAX_CORREO:
+            raise ValueError(
+                f"El correo debe tener entre {cls.MIN_CORREO} y {cls.MAX_CORREO} caracteres."
+            )
         if "@" not in correo or "." not in correo.split("@")[-1]:
             raise ValueError("El correo debe tener un formato válido (ejemplo: usuario@dominio.com).")
         return correo
+
+    @classmethod
+    def _validar_telefono(cls, telefono: str) -> str:
+        """Valida que el teléfono no exceda el largo máximo permitido."""
+        telefono = (telefono or "").strip()
+        if len(telefono) > cls.MAX_TELEFONO:
+            raise ValueError(f"El teléfono no puede superar los {cls.MAX_TELEFONO} caracteres.")
+        return telefono
 
     @staticmethod
     def _validar_salario(valor: float) -> float:

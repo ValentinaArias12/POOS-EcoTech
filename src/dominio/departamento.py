@@ -3,10 +3,15 @@ from dominio.empleado import Empleado
 class Departamento:
     """Entidad de dominio que representa un departamento de EcoTech."""
 
+    MIN_NOMBRE_LENGTH = 2
+    MAX_NOMBRE_LENGTH = 100
+    
     def __init__(self, nombre: str, id: int | None = None):
         nombre = nombre.strip()
         if not nombre:
             raise ValueError("El nombre del departamento es obligatorio.")
+        if len(nombre) < self.MIN_NOMBRE_LENGTH or len(nombre) > self.MAX_NOMBRE_LENGTH:
+            raise ValueError(f"El nombre del departamento debe tener entre {self.MIN_NOMBRE_LENGTH} y {self.MAX_NOMBRE_LENGTH} caracteres.")
         self.id = id
         self.nombre = nombre
         self._empleados: list[Empleado] = []

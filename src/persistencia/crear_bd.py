@@ -1,12 +1,75 @@
-from persistencia.conexion import abrir_conexion
-
+from persistencia.conexion import abrir_conexion, obtener_motor
 
 def crear_tablas():
-    conexion = None
-    try:
-        conexion = abrir_conexion()
-        cursor = conexion.cursor()
-
+    conexion = abrir_conexion()
+    cursor = conexion.cursor()
+    motor = obtener_motor()
+    
+    if motor == "sqlite":
+        sentencias = [
+            """
+            CREATE TABLE IF NOT EXISTS departamento (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL UNIQUE
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS empleado (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                correo TEXT NOT NULL UNIQUE,
+                telefono TEXT,
+                fecha_inicio TEXT NOT NULL,
+                salario_base REAL NOT NULL DEFAULT 0,
+                tipo TEXT NOT NULL DEFAULT 'BASE',
+                bono_anual REAL NOT NULL DEFAULT 0,
+                tarifa_hora REAL NOT NULL DEFAULT 0,
+                departamento_id INTEGER,
+                FOREIGN KEY (departamento_id) REFERENCES departamento(id) ON DELETE SET NULL
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS usuario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre_usuario TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                empleado_id INTEGER NOT NULL UNIQUE,
+                rol TEXT NOT NULL DEFAULT 'empleado' CHECK (rol IN ('admin', 'empleado')),
+                FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS proyecto (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL UNIQUE,
+                descripcion TEXT,
+                fecha_inicio TEXT NOT NULL,
+                activo INTEGER NOT NULL DEFAULT 1
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS proyecto_empleado (
+                proyecto_id INTEGER NOT NULL,
+                empleado_id INTEGER NOT NULL,
+                PRIMARY KEY (proyecto_id, empleado_id),
+                FOREIGN KEY (proyecto_id) REFERENCES proyecto(id) ON DELETE CASCADE,
+                FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS registro_tiempo (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TEXT NOT NULL,
+                horas REAL NOT NULL CHECK (horas > 0 AND horas <= 24),
+                descripcion TEXT NOT NULL,
+                empleado_id INTEGER NOT NULL,
+                proyecto_id INTEGER NOT NULL,
+                FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE,
+                FOREIGN KEY (proyecto_id) REFERENCES proyecto(id) ON DELETE CASCADE
+            )
+            """,
+        ]
+    else:  # Definición para MySQL
         sentencias = [
             """
             CREATE TABLE IF NOT EXISTS departamento (
@@ -26,8 +89,17 @@ def crear_tablas():
                 bono_anual DECIMAL(12,2) NOT NULL DEFAULT 0,
                 tarifa_hora DECIMAL(12,2) NOT NULL DEFAULT 0,
                 departamento_id INT NULL,
-                CONSTRAINT fk_empleado_departamento FOREIGN KEY (departamento_id)
-                    REFERENCES departamento(id) ON UPDATE CASCADE ON DELETE SET NULL
+                CONSTRAINT fk_empleado_departamento FOREIGN KEY (departamento_id) REFERENCES departamento(id) ON UPDATE CASCADE ON DELETE SET NULL
+            ) ENGINE=InnoDB
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS usuario (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                nombre_usuario VARCHAR(40) NOT NULL UNIQUE,
+                password_hash VARCHAR(255) NOT NULL,
+                empleado_id INT NOT NULL UNIQUE,
+                rol VARCHAR(20) NOT NULL DEFAULT 'empleado',
+                CONSTRAINT fk_usuario_empleado FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE
             ) ENGINE=InnoDB
             """,
             """
@@ -39,59 +111,15 @@ def crear_tablas():
                 activo BOOLEAN NOT NULL DEFAULT TRUE
             ) ENGINE=InnoDB
             """,
-        ]
-
-        for sql in sentencias:
-            cursor.execute(sql)
-
-        # Normaliza instalaciones anteriores que tenían tablas MyISAM o columnas antiguas.
-        cursor.execute("ALTER TABLE departamento ENGINE=InnoDB")
-        cursor.execute("ALTER TABLE empleado ENGINE=InnoDB")
-        cursor.execute(
-            """
-            ALTER TABLE empleado
-                ADD COLUMN IF NOT EXISTS telefono VARCHAR(30),
-                ADD COLUMN IF NOT EXISTS fecha_inicio DATE NOT NULL DEFAULT '2000-01-01',
-                ADD COLUMN IF NOT EXISTS salario_base DECIMAL(12,2) NOT NULL DEFAULT 0,
-                ADD COLUMN IF NOT EXISTS tipo VARCHAR(20) NOT NULL DEFAULT 'BASE',
-                ADD COLUMN IF NOT EXISTS bono_anual DECIMAL(12,2) NOT NULL DEFAULT 0,
-                ADD COLUMN IF NOT EXISTS tarifa_hora DECIMAL(12,2) NOT NULL DEFAULT 0,
-                ADD COLUMN IF NOT EXISTS departamento_id INT NULL
-            """
-        )
-        cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM information_schema.REFERENTIAL_CONSTRAINTS
-            WHERE CONSTRAINT_SCHEMA = DATABASE()
-            AND CONSTRAINT_NAME = 'fk_empleado_departamento'
-            """
-        )
-        if cursor.fetchone()[0] == 0:
-            cursor.execute(
-                """
-                ALTER TABLE empleado
-                ADD CONSTRAINT fk_empleado_departamento
-                FOREIGN KEY (departamento_id) REFERENCES departamento(id)
-                ON UPDATE CASCADE ON DELETE SET NULL
-                """
-            )
-        cursor.execute("ALTER TABLE proyecto ENGINE=InnoDB")
-
-        cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS proyecto_empleado (
                 proyecto_id INT NOT NULL,
                 empleado_id INT NOT NULL,
                 PRIMARY KEY (proyecto_id, empleado_id),
-                CONSTRAINT fk_pe_proyecto
-                    FOREIGN KEY (proyecto_id) REFERENCES proyecto(id) ON DELETE CASCADE,
-                CONSTRAINT fk_pe_empleado
-                    FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE
+                CONSTRAINT fk_pe_proyecto FOREIGN KEY (proyecto_id) REFERENCES proyecto(id) ON DELETE CASCADE,
+                CONSTRAINT fk_pe_empleado FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE
             ) ENGINE=InnoDB
-            """
-        )
-        cursor.execute(
+            """,
             """
             CREATE TABLE IF NOT EXISTS registro_tiempo (
                 id INT PRIMARY KEY AUTO_INCREMENT,
@@ -100,13 +128,15 @@ def crear_tablas():
                 descripcion VARCHAR(500) NOT NULL,
                 empleado_id INT NOT NULL,
                 proyecto_id INT NOT NULL,
-                CONSTRAINT fk_rt_empleado
-                    FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE,
-                CONSTRAINT fk_rt_proyecto
-                    FOREIGN KEY (proyecto_id) REFERENCES proyecto(id) ON DELETE CASCADE
+                CONSTRAINT fk_rt_empleado FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE,
+                CONSTRAINT fk_rt_proyecto FOREIGN KEY (proyecto_id) REFERENCES proyecto(id) ON DELETE CASCADE
             ) ENGINE=InnoDB
-            """
-        )
+            """,
+        ]
+
+    try:
+        for sql in sentencias:
+            cursor.execute(sql)
         conexion.commit()
     except Exception:
         if conexion:
@@ -115,7 +145,6 @@ def crear_tablas():
     finally:
         if conexion:
             conexion.close()
-
 
 if __name__ == "__main__":
     crear_tablas()

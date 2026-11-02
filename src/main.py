@@ -1,3 +1,4 @@
+import getpass
 from persistencia.crear_bd import crear_tablas
 from persistencia.departamento_dao import DepartamentoDAO
 from persistencia.empleado_dao import EmpleadoDAO
@@ -8,7 +9,8 @@ from dominio.empleado import Empleado, EmpleadoPlanta, EmpleadoContrata
 from dominio.proyecto import Proyecto
 from dominio.registro_tiempo import RegistroTiempo
 from persistencia.semilla_bd import cargar_semillas
-
+from servicios.autenticacion import autenticar, registrar_usuario
+from servicios.indicadores import consultar_dolar_observado
 
 def pedir_entero(mensaje, permitir_vacio=False):
     while True:
@@ -19,7 +21,6 @@ def pedir_entero(mensaje, permitir_vacio=False):
             return int(valor)
         except ValueError:
             print("Debe ingresar un número entero válido.")
-
 
 def pedir_float(mensaje, minimo=0.0, permitir_vacio=False):
     while True:
@@ -35,7 +36,6 @@ def pedir_float(mensaje, minimo=0.0, permitir_vacio=False):
         except ValueError:
             print("Debe ingresar un número válido.")
 
-
 def listar_departamentos():
     items = DepartamentoDAO.listar()
     if not items:
@@ -43,7 +43,6 @@ def listar_departamentos():
         return
     for item in items:
         print(item)
-
 
 def menu_departamentos():
     while True:
@@ -81,41 +80,50 @@ def menu_departamentos():
         except Exception as exc:
             print(f"Error de base de datos / sistema: {exc}")
 
-
 def crear_empleado_desde_entrada():
     while True:
         nombre = input("Nombre: ").strip()
         try:
             Empleado._validar_nombre(nombre)
             break
-        except ValueError as e:
-            print(e)
-
+        except (ValueError, TypeError) as e:
+            print(f" {e}")
+            
     while True:
         correo = input("Correo: ").strip().lower()
         try:
             Empleado._validar_correo(correo)
             break
-        except ValueError as e:
-            print(e)
-
-    telefono = input("Teléfono (opcional): ").strip()
-
-
+        except (ValueError, TypeError) as e:
+            print(f" {e}")
+            
+    while True:
+        telefono = input("Teléfono (opcional): ").strip()
+        try:
+            Empleado._validar_telefono(telefono)
+            break
+        except (ValueError, TypeError) as e:
+            print(f" {e}")
+            
     while True:
         try:
             salario = pedir_float("Salario base: ", minimo=0)
             Empleado._validar_salario(salario)
             break
-        except ValueError as e:
-            print(e)
-
+        except (ValueError, TypeError) as e:
+            print(f" {e}")
+            
     dep_id = pedir_entero("ID departamento (Enter = sin departamento): ", permitir_vacio=True)
-
     tipo = input("Tipo [1=Base, 2=Planta, 3=Contrata]: ").strip()
-    comunes = dict(nombre=nombre, correo=correo, telefono=telefono,
-                salario_base=salario, departamento_id=dep_id)
-
+    
+    comunes = dict(
+        nombre=nombre,
+        correo=correo,
+        telefono=telefono,
+        salario_base=salario,
+        departamento_id=dep_id
+    )
+    
     if tipo == "2":
         bono = pedir_float("Bono anual: ", minimo=0)
         return EmpleadoPlanta(**comunes, bono_anual=bono)
@@ -123,8 +131,6 @@ def crear_empleado_desde_entrada():
         tarifa = pedir_float("Tarifa hora: ", minimo=0)
         return EmpleadoContrata(**comunes, tarifa_hora=tarifa)
     return Empleado(**comunes)
-
-
 
 def menu_empleados():
     while True:
@@ -177,7 +183,6 @@ def menu_empleados():
         except Exception as exc:
             print(f"Error de base de datos / sistema: {exc}")
 
-
 def menu_proyectos():
     while True:
         print("\n--- PROYECTOS ---")
@@ -227,7 +232,6 @@ def menu_proyectos():
             print(f"Error de validación: {exc}")
         except Exception as exc:
             print(f"Error de base de datos / sistema: {exc}")
-
 
 def menu_registros():
     while True:
@@ -281,6 +285,22 @@ def menu_registros():
         except Exception as exc:
             print(f"Error de base de datos / sistema: {exc}")
 
+def solicitar_login() -> dict | None:
+    """Solicita credenciales por pantalla y autentica contra la base de datos."""
+    print("\n==========================================")
+    print("  INICIO DE SESIÓN - ECOTECH")
+    print("==========================================")
+    usuario = input("Usuario: ").strip()
+    try:
+        clave = getpass.getpass("Contraseña: ")
+    except Exception:
+        clave = input("Contraseña: ")
+    sesion = autenticar(usuario, clave)
+    if sesion is None:
+        print(" Usuario o contraseña incorrectos.")
+        return None
+    print(f"\n ¡Bienvenido/a, {sesion['nombre_usuario']}! [Rol: {sesion['rol'].upper()}]")
+    return sesion
 
 def main():
     try:
@@ -292,28 +312,42 @@ def main():
         print("Verifica tu archivo .env o que el servidor MariaDB/MySQL esté activo.")
         return
 
+
+    sesion = None
+    while sesion is None:
+        sesion = solicitar_login()
+
     while True:
-        print("\n========== ECOTECH ==========")
+        print(f"\n========== ECOTECH (Usuario: {sesion['nombre_usuario']} | Rol: {sesion['rol'].upper()}) ==========")
         print("1. Empleados")
         print("2. Departamentos")
         print("3. Proyectos")
         print("4. Registros de tiempo")
+        print("5. Consultar Indicador Económico (Dólar API)")
         print("0. Salir")
         opcion = input("Seleccione una opción: ").strip()
+        
         if opcion == "1":
-            menu_empleados()
+            if sesion["rol"] != "admin":
+                print(" Acceso restringido: Se requieren permisos de administrador.")
+            else:
+                menu_empleados()
         elif opcion == "2":
-            menu_departamentos()
+            if sesion["rol"] != "admin":
+                print(" Acceso restringido: Se requieren permisos de administrador.")
+            else:
+                menu_departamentos()
         elif opcion == "3":
             menu_proyectos()
         elif opcion == "4":
             menu_registros()
+        elif opcion == "5":
+            consultar_dolar_observado()
         elif opcion == "0":
-            print("Hasta luego.")
+            print(f"Hasta luego, {sesion['nombre_usuario']}.")
             break
         else:
             print("Opción no válida.")
-
 
 if __name__ == "__main__":
     main()
