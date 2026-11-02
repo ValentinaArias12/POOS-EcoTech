@@ -285,8 +285,102 @@ def menu_registros():
         except Exception as exc:
             print(f"Error de base de datos / sistema: {exc}")
 
+
+def mostrar_mi_ficha(sesion: dict):
+    """Muestra y permite actualizar únicamente los datos del empleado autenticado."""
+    empleado_id = sesion["empleado_id"]
+    empleado = EmpleadoDAO.buscar_por_id(empleado_id)
+    if empleado is None:
+        print(" No se encontraron datos de empleado vinculados a su cuenta.")
+        return
+
+    print("\n==========================================")
+    print("  MI FICHA PERSONAL")
+    print("==========================================")
+    print(f"ID Empleado : {empleado.id}")
+    print(f"Nombre : {empleado.nombre}")
+    print(f"Correo : {empleado.correo}")
+    print(f"Teléfono : {getattr(empleado, 'telefono', 'N/A')}")
+    print(f"Salario Base: ${getattr(empleado, 'salario_base', 0):,.2f}")
+    print("------------------------------------------")
+
+    opc = input("¿Desea actualizar su correo personal? (s/n): ").strip().lower()
+    if opc == "s":
+        nuevo_correo = input("Ingrese nuevo correo: ").strip().lower()
+        try:
+            empleado.cambiar_correo(nuevo_correo)
+            if EmpleadoDAO.actualizar(empleado):
+                print(" Correo actualizado exitosamente.")
+            else:
+                print(" No se pudo guardar el cambio.")
+        except (ValueError, TypeError) as error:
+            print(f" Error de validación: {error}")
+
+def ver_mis_registros(sesion: dict):
+    empleado_id = sesion["empleado_id"]
+    todos = RegistroTiempoDAO.listar()
+    mis_regs = [r for r in todos if getattr(r, "empleado_id", None) == empleado_id]
+
+    print("\n==========================================")
+    print("  MIS REGISTROS DE TIEMPO")
+    print("==========================================")
+    if not mis_regs:
+        print("ℹ No tienes registros de tiempo ingresados.")
+        return
+    for reg in mis_regs:
+        print(reg)
+
+def menu_empleado(sesion: dict):
+    """Menú interactivo exclusivo para usuarios con rol 'empleado'."""
+    while True:
+        print(f"\n========== ECOTECH (Usuario: {sesion['nombre_usuario']} | Rol: EMPLEADO) ==========")
+        print("1. Mi ficha personal")
+        print("2. Mis registros de tiempo")
+        print("3. Consultar Indicador Económico (Dólar API)")
+        print("0. Cerrar sesión")
+        opcion = input("Seleccione una opción: ").strip()
+
+        if opcion == "1":
+            mostrar_mi_ficha(sesion)
+        elif opcion == "2":
+            ver_mis_registros(sesion)
+        elif opcion == "3":
+            consultar_dolar_observado()
+        elif opcion == "0":
+            print(f"Hasta luego, {sesion['nombre_usuario']}.")
+            break
+        else:
+            print("Opción no válida.")
+
+def menu_admin(sesion: dict):
+    """Menú completo de administración reservado para el rol 'admin'."""
+    while True:
+        print(f"\n========== ECOTECH (Usuario: {sesion['nombre_usuario']} | Rol: ADMIN) ==========")
+        print("1. Empleados")
+        print("2. Departamentos")
+        print("3. Proyectos")
+        print("4. Registros de tiempo")
+        print("5. Consultar Indicador Económico (Dólar API)")
+        print("0. Cerrar sesión")
+        opcion = input("Seleccione una opción: ").strip()
+
+        if opcion == "1":
+            menu_empleados()
+        elif opcion == "2":
+            menu_departamentos()
+        elif opcion == "3":
+            menu_proyectos()
+        elif opcion == "4":
+            menu_registros()
+        elif opcion == "5":
+            consultar_dolar_observado()
+        elif opcion == "0":
+            print(f"Hasta luego, {sesion['nombre_usuario']}.")
+            break
+        else:
+            print("Opción no válida.")
+
 def solicitar_login() -> dict | None:
-    """Solicita credenciales por pantalla y autentica contra la base de datos."""
     print("\n==========================================")
     print("  INICIO DE SESIÓN - ECOTECH")
     print("==========================================")
@@ -317,37 +411,11 @@ def main():
     while sesion is None:
         sesion = solicitar_login()
 
-    while True:
-        print(f"\n========== ECOTECH (Usuario: {sesion['nombre_usuario']} | Rol: {sesion['rol'].upper()}) ==========")
-        print("1. Empleados")
-        print("2. Departamentos")
-        print("3. Proyectos")
-        print("4. Registros de tiempo")
-        print("5. Consultar Indicador Económico (Dólar API)")
-        print("0. Salir")
-        opcion = input("Seleccione una opción: ").strip()
-        
-        if opcion == "1":
-            if sesion["rol"] != "admin":
-                print(" Acceso restringido: Se requieren permisos de administrador.")
-            else:
-                menu_empleados()
-        elif opcion == "2":
-            if sesion["rol"] != "admin":
-                print(" Acceso restringido: Se requieren permisos de administrador.")
-            else:
-                menu_departamentos()
-        elif opcion == "3":
-            menu_proyectos()
-        elif opcion == "4":
-            menu_registros()
-        elif opcion == "5":
-            consultar_dolar_observado()
-        elif opcion == "0":
-            print(f"Hasta luego, {sesion['nombre_usuario']}.")
-            break
-        else:
-            print("Opción no válida.")
+
+    if sesion["rol"] == "admin":
+        menu_admin(sesion)
+    else:
+        menu_empleado(sesion)
 
 if __name__ == "__main__":
     main()
