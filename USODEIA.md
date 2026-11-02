@@ -28,3 +28,20 @@ Ejemplo:
 - Se mantuvo el patrón DAO trabajado en clases.
 - No se incorporaron capas Service o Controller porque no corresponden
   al alcance trabajado en la unidad.
+
+
+# Uso de IA en 3ra evaluación 
+Se utilizó la IA como asistente complementario en el manejo de excepciones y en el consumo de la API, además de verificar los métodos DAO para que estén actualizados.
+
+Se modificaron fragmentos dados por la IA cuando presentaban riesgos o cuando no respetaban la arquitectura modular del proyecto.
+
+Se mantuvo estrictamente la arquitectura en capas del proyecto (se agregó servicios/), comprobando el funcionamiento mediante pruebas de inicio de sesión y simulación de fallos.
+
+Su uso también pudo permitir el uso de la base de datos de MySql/MariaDB como también de SQLite 
+
+
+Seguridad y Roles: Se aceptó el uso de bcrypt (hashpw/checkpw) para contraseñas y se estructuró el control de acceso por roles (admin/empleado) integrando el ID de sesión para automatizar fichas y registros.
+
+
+
+
